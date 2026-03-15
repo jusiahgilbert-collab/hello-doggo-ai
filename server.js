@@ -43,7 +43,63 @@ res.status(500).json({error:"Square lookup failed"})
 }
 
 })
+const twilio = require("twilio")
 
+const client = twilio(
+process.env.TWILIO_ACCOUNT_SID,
+process.env.TWILIO_AUTH_TOKEN
+)
+
+app.post("/sendSMS", async (req,res)=>{
+
+const phone = req.body.phone
+const message = req.body.message
+
+try{
+
+await client.messages.create({
+body: message,
+from: "+13503532552",
+to: phone
+})
+
+res.json({success:true})
+
+}catch(err){
+
+console.error(err)
+res.status(500).json({error:"SMS failed"})
+}
+
+})const twilio = require("twilio")
+
+const client = twilio(
+process.env.TWILIO_ACCOUNT_SID,
+process.env.TWILIO_AUTH_TOKEN
+)
+
+app.post("/sendSMS", async (req,res)=>{
+
+const phone = req.body.phone
+const message = req.body.message
+
+try{
+
+await client.messages.create({
+body: message,
+from: "+13503532552",
+to: phone
+})
+
+res.json({success:true})
+
+}catch(err){
+
+console.error(err)
+res.status(500).json({error:"SMS failed"})
+}
+
+})
 app.listen(3000,()=>{
 console.log("Server running on port 3000")
 })
