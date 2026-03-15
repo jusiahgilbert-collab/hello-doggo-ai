@@ -28,8 +28,9 @@ exact: phone
 },
 {
 headers:{
-Authorization:`Bearer ${SQUARE_TOKEN}`,
-"Content-Type":"application/json"
+Authorization: `Bearer ${SQUARE_TOKEN}`,
+"Content-Type":"application/json",
+"Square-Version":"2024-06-04"
 }
 }
 )
@@ -37,7 +38,8 @@ Authorization:`Bearer ${SQUARE_TOKEN}`,
 res.json(response.data)
 
 }catch(err){
-res.status(500).json({error:err.message})
+console.error(err.response?.data || err.message)
+res.status(500).json({error:"Square lookup failed"})
 }
 
 })
@@ -45,4 +47,3 @@ res.status(500).json({error:err.message})
 app.listen(3000,()=>{
 console.log("Server running on port 3000")
 })
-
