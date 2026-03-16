@@ -1,4 +1,20 @@
-const express = require("express")
+app.post("/sendSMS", async (req, res) => {
+  const phone = req.body.phone
+  const message = req.body.message
+
+  try {
+    await client.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE,
+      to: phone
+    })
+
+    res.json({ success: true })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "SMS failed" })
+  }
+})const express = require("express")
 const axios = require("axios")
 require("dotenv").config()
 const cors = require("cors")
