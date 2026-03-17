@@ -67,7 +67,26 @@ app.post("/checkAvailability", async (req, res) => {
       });
     }
 
-    res.json(data);
+    // FORMAT THE TIMES (THIS IS THE IMPORTANT PART)
+    const availabilities = data.availabilities || [];
+
+    const formatted = availabilities.slice(0, 5).map(a => {
+      const date = new Date(a.start_at);
+
+      return {
+        date: date.toLocaleDateString([], {
+          weekday: "long",
+          month: "short",
+          day: "numeric"
+        }),
+        time: date.toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit"
+        })
+      };
+    });
+
+    res.json({ options: formatted });
 
   } catch (err) {
     console.error("SERVER ERROR:", err);
