@@ -72,12 +72,7 @@ end.setDate(start.getDate() + 7);
     // FORMAT THE TIMES (THIS IS THE IMPORTANT PART)
     const availabilities = data.availabilities || [];
 
- const formatted = availabilities.slice(0, 5).map(a => {
-const sorted = availabilities.sort((a, b) => {
-  return new Date(a.start_at) - new Date(b.start_at);
-});
-
-const formatted = sorted.slice(0, 5).map(a => {
+const slots = availabilities.map(a => {
   const date = new Date(
     new Date(a.start_at).toLocaleString("en-US", {
       timeZone: "America/Los_Angeles"
@@ -85,17 +80,33 @@ const formatted = sorted.slice(0, 5).map(a => {
   );
 
   return {
-    date: date.toLocaleDateString([], {
-      weekday: "long",
-      month: "short",
-      day: "numeric"
-    }),
-    time: date.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit"
-    })
+    raw: a.start_at,
+    date,
+    hour: date.getHours()
   };
 });
+
+const morning = slots.filter(s => s.hour < 12);
+const afternoon = slots.filter(s => s.hour >= 12 && s.hour < 17);
+const evening = slots.filter(s => s.hour >= 17);
+
+const selected = [
+  ...morning.slice(0, 2),
+  ...afternoon.slice(0, 2),
+  ...evening.slice(0, 1)
+].slice(0, 5);
+
+const formatted = selected.map(s => ({
+  date: s.date.toLocaleDateString([], {
+    weekday: "long",
+    month: "short",
+    day: "numeric"
+  }),
+  time: s.date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  })
+}));
     res.json({ options: formatted });
 
   } catch (err) {
