@@ -76,6 +76,38 @@ end.setDate(start.getDate() + 7);
 
     // FORMAT THE TIMES (THIS IS THE IMPORTANT PART)
     const availabilities = data.availabilities || [];
+date.toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+    );
+
+    const yyyy = local.getFullYear();
+    const mm = String(local.getMonth() + 1).padStart(2, "0");
+    const dd = String(local.getDate()).padStart(2, "0");
+
+    const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+    return formattedDate === requestedDate;
+  });
+}
+
+const formatted = filtered.slice(0, 5).map(a => {
+  const date = new Date(
+    new Date(a.start_at).toLocaleString("en-US", {
+      timeZone: "America/Los_Angeles"
+    })
+  );
+
+  return {
+    date: date.toLocaleDateString([], {
+      weekday: "long",
+      month: "short",
+      day: "numeric"
+    }),
+    time: date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit"
+    })
+  };
+});
 
 const requestedDate = req.body.date;
 
