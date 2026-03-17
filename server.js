@@ -73,7 +73,11 @@ end.setDate(start.getDate() + 7);
     const availabilities = data.availabilities || [];
 
     const formatted = availabilities.slice(0, 5).map(a => {
-      const date = new Date(a.start_at);
+const date = new Date(
+  new Date(a.start_at).toLocaleString("en-US", {
+    timeZone: "America/Los_Angeles"
+  })
+);
 
       return {
         date: date.toLocaleDateString([], {
