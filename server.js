@@ -17,14 +17,19 @@ app.get("/", (req, res) => {
   res.send("Server running");
 });
 
-app.post("/checkAvailability", async (req, res) => {
-  try {
-   const start = new Date();
-start.setHours(0, 0, 0, 0); // ← THIS is the fix
+const requestedDate = req.body.date;
 
-const end = new Date();
+let start;
+if (requestedDate) {
+  start = new Date(requestedDate);
+  start.setHours(0, 0, 0, 0);
+} else {
+  start = new Date();
+  start.setHours(0, 0, 0, 0);
+}
+
+const end = new Date(start);
 end.setDate(start.getDate() + 7);
-
     const body = {
       query: {
         filter: {
