@@ -19,9 +19,11 @@ app.get("/", (req, res) => {
 
 app.post("/checkAvailability", async (req, res) => {
   try {
-    const start = new Date();
-    const end = new Date();
-    end.setDate(start.getDate() + 7);
+   const start = new Date();
+start.setHours(0, 0, 0, 0); // ← THIS is the fix
+
+const end = new Date();
+end.setDate(start.getDate() + 7);
 
     const body = {
       query: {
