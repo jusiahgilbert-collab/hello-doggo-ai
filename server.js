@@ -77,7 +77,28 @@ end.setDate(start.getDate() + 7);
     // FORMAT THE TIMES (THIS IS THE IMPORTANT PART)
     const availabilities = data.availabilities || [];
 
-const slots = availabilities.map(a => {
+const requestedDate = req.body.date;
+
+let filtered = availabilities;
+
+if (requestedDate) {
+  filtered = availabilities.filter(a => {
+    const date = new Date(a.start_at);
+    const local = new Date(
+      date.toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+    );
+
+    const yyyy = local.getFullYear();
+    const mm = String(local.getMonth() + 1).padStart(2, "0");
+    const dd = String(local.getDate()).padStart(2, "0");
+
+    const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+    return formattedDate === requestedDate;
+  });
+}
+
+const slots = filtered.map(a => {
   const date = new Date(
     new Date(a.start_at).toLocaleString("en-US", {
       timeZone: "America/Los_Angeles"
