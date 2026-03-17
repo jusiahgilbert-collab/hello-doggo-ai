@@ -1,121 +1,73 @@
-app.post("/sendSMS", async (req, res) => {
-  const phone = req.body.phone
-  const message = req.body.message
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+require("dotenv").config();
 
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+const PORT = process.env.PORT || 3000;
+
+const SQUARE_TOKEN = process.env.SQUARE_TOKEN;
+const LOCATION_ID = process.env.SQUARE_LOCATION_ID;
+const SERVICE_ID = process.env.SQUARE_SERVICE_VARIATION_ID;
+const TEAM_MEMBER_ID = process.env.SQUARE_TEAM_MEMBER_ID;
+
+const headers = {
+  Authorization: `Bearer ${SQUARE_TOKEN}`,
+  "Content-Type": "application/json",
+  "Square-Version": "2024-06-04"
+};
+
+app.get("/", (req, res) => {
+  res.send("Server running");
+});
+
+app.post("/checkAvailability", async (req, res) => {
   try {
-    await client.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE,
-      to: phone
-    })
+    const start = new Date();
+    const end = new Date();
+    end.setDate(start.getDate() + 7);
 
-    res.json({ success: true })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: "SMS failed" })
+    const body = {
+      query: {
+        filter: {
+          location_id: LOCATION_ID,
+          start_at_range: {
+            start_at: start.toISOString(),
+            end_at: end.toISOString()
+          },
+          segment_filters: [
+            {
+              service_variation_id: SERVICE_ID,
+              team_member_id_filter: {
+                any: [TEAM_MEMBER_ID]
+              }
+            }
+          ]
+        }
+      }
+    };
+
+    const response = await axios.post(
+      "https://connect.squareup.com/v2/bookings/availability/search",
+      body,
+      { headers }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: "availability failed" });
   }
-})const express = require("express")
-const axios = require("axios")
-require("dotenv").config()
-const cors = require("cors")
+});
 
-const app = express()
-app.use(express.json())
-app.use(cors())
+app.post("/sendSMS", async (req, res) => {
+  console.log("SMS requested:", req.body);
+  res.json({ success: true });
+});
 
-const SQUARE_TOKEN = process.env.SQUARE_TOKEN
-
-app.post("/searchCustomer", async (req,res)=>{
-
-const phone = req.body.phone
-
-try{
-
-const response = await axios.post(
-"https://connect.squareup.com/v2/customers/search",
-{
-query:{
-filter:{
-phone_number:{
-exact: phone
-}
-}
-}
-},
-{
-headers:{
-Authorization: `Bearer ${SQUARE_TOKEN}`,
-"Content-Type":"application/json",
-"Square-Version":"2024-06-04"
-}
-}
-)
-
-res.json(response.data)
-
-}catch(err){
-console.error(err.response?.data || err.message)
-res.status(500).json({error:"Square lookup failed"})
-}
-
-})
-const twilio = require("twilio")
-
-const client = twilio(
-process.env.TWILIO_ACCOUNT_SID,
-process.env.TWILIO_AUTH_TOKEN
-)
-
-app.post("/sendSMS", async (req,res)=>{
-
-const phone = req.body.phone
-const message = req.body.message
-
-try{
-
-await client.messages.create({
-body: message,
-from: "+13503532552",
-to: phone
-})
-
-res.json({success:true})
-
-}catch(err){
-
-console.error(err)
-res.status(500).json({error:"SMS failed"})
-}
-
-})const twilio = require("twilio")
-
-const client = twilio(
-process.env.TWILIO_ACCOUNT_SID,
-process.env.TWILIO_AUTH_TOKEN
-)
-
-app.post("/sendSMS", async (req,res)=>{
-
-const phone = req.body.phone
-const message = req.body.message
-
-try{
-
-await client.messages.create({
-body: message,
-from: "+13503532552",
-to: phone
-})
-
-res.json({success:true})
-
-}catch(err){
-
-console.error(err)
-res.status(500).json({error:"SMS failed"})
-}
-
-})
-app.listen(3000,()=>{
-console.log("Server running on port 3000")
-})
+app.listen(PORT, () => {
+  console.log(`Running on port ${PORT}`);
+});
