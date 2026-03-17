@@ -17,6 +17,7 @@ const TEAM_MEMBER_ID = process.env.SQUARE_TEAM_MEMBER_ID;
 const headers = {
   Authorization: `Bearer ${SQUARE_TOKEN}`,
   "Content-Type": "application/json",
+  "Accept": "application/json",
   "Square-Version": "2024-06-04"
 };
 
