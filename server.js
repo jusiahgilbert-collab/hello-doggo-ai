@@ -1,4 +1,4 @@
-const express = require("express");
+kconst express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 require("dotenv").config();
@@ -57,9 +57,14 @@ app.post("/checkAvailability", async (req, res) => {
     );
 
     res.json(response.data);
+
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ error: "availability failed" });
+    console.error("FULL ERROR:", JSON.stringify(err.response?.data, null, 2));
+
+    res.status(500).json({
+      error: "availability failed",
+      details: err.response?.data || err.message
+    });
   }
 });
 
