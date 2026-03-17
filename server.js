@@ -1,5 +1,4 @@
 const express = require("express");
-const axios = require("axios");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -13,13 +12,6 @@ const SQUARE_TOKEN = process.env.SQUARE_TOKEN;
 const LOCATION_ID = process.env.SQUARE_LOCATION_ID;
 const SERVICE_ID = process.env.SQUARE_SERVICE_VARIATION_ID;
 const TEAM_MEMBER_ID = process.env.SQUARE_TEAM_MEMBER_ID;
-
-const headers = {
-  Authorization: `Bearer ${SQUARE_TOKEN}`,
-  "Content-Type": "application/json",
-  "Accept": "application/json",
-  "Square-Version": "2024-06-04"
-};
 
 app.get("/", (req, res) => {
   res.send("Server running");
@@ -51,20 +43,38 @@ app.post("/checkAvailability", async (req, res) => {
       }
     };
 
-    const response = await axios.post(
+    const response = await fetch(
       "https://connect.squareup.com/v2/bookings/availability/search",
-      body,
-      { headers }
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SQUARE_TOKEN}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Square-Version": "2024-06-04"
+        },
+        body: JSON.stringify(body)
+      }
     );
 
-    res.json(response.data);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("FULL ERROR:", data);
+      return res.status(500).json({
+        error: "availability failed",
+        details: data
+      });
+    }
+
+    res.json(data);
 
   } catch (err) {
-    console.error("FULL ERROR:", JSON.stringify(err.response?.data, null, 2));
+    console.error("SERVER ERROR:", err);
 
     res.status(500).json({
       error: "availability failed",
-      details: err.response?.data || err.message
+      details: err.message
     });
   }
 });
