@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 const app = express();
 app.use(express.json());
@@ -17,19 +17,20 @@ app.get("/", (req, res) => {
   res.send("Server running");
 });
 
-const requestedDate = req.body.date;
+app.post("/checkAvailability", async (req, res) => {
+  try {
+    const requestedDate = req.body.date;
+    const timeOfDay = req.body.timeOfDay;
 
-let start;
-if (requestedDate) {
-  start = new Date(requestedDate);
-  start.setHours(0, 0, 0, 0);
-} else {
-  start = new Date();
-  start.setHours(0, 0, 0, 0);
-}
+    console.log("REQUESTED DATE:", requestedDate);
+    console.log("FULL BODY:", JSON.stringify(req.body));
 
-const end = new Date(start);
-end.setDate(start.getDate() + 7);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 30);
+
     const body = {
       query: {
         filter: {
@@ -67,106 +68,71 @@ end.setDate(start.getDate() + 7);
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("FULL ERROR:", data);
       return res.status(500).json({
         error: "availability failed",
         details: data
       });
     }
 
-    // FORMAT THE TIMES (THIS IS THE IMPORTANT PART)
     const availabilities = data.availabilities || [];
-date.toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
-    );
+    let filtered = availabilities;
 
-    const yyyy = local.getFullYear();
-    const mm = String(local.getMonth() + 1).padStart(2, "0");
-    const dd = String(local.getDate()).padStart(2, "0");
+    if (requestedDate) {
+      filtered = availabilities.filter((a) => {
+        const utc = new Date(a.start_at);
+        const local = new Date(
+          utc.toLocaleString("en-US", {
+            timeZone: "America/Los_Angeles"
+          })
+        );
 
-    const formattedDate = `${yyyy}-${mm}-${dd}`;
+        const yyyy = local.getFullYear();
+        const mm = String(local.getMonth() + 1).padStart(2, "0");
+        const dd = String(local.getDate()).padStart(2, "0");
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-    return formattedDate === requestedDate;
-  });
-}
+        return formattedDate === requestedDate;
+      });
+    }
 
-const formatted = filtered.slice(0, 5).map(a => {
-  const date = new Date(
-    new Date(a.start_at).toLocaleString("en-US", {
-      timeZone: "America/Los_Angeles"
-    })
-  );
+    let slots = filtered.map((a) => {
+      const date = new Date(
+        new Date(a.start_at).toLocaleString("en-US", {
+          timeZone: "America/Los_Angeles"
+        })
+      );
 
-  return {
-    date: date.toLocaleDateString([], {
-      weekday: "long",
-      month: "short",
-      day: "numeric"
-    }),
-    time: date.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit"
-    })
-  };
-});
+      return {
+        raw: a.start_at,
+        date,
+        dateLabel: date.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "short",
+          day: "numeric"
+        }),
+        timeLabel: date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit"
+        })
+      };
+    });
 
-const requestedDate = req.body.date;
+    slots.sort((a, b) => a.date - b.date);
 
-let filtered = availabilities;
+    if (timeOfDay === "afternoon") {
+      slots = slots.filter((slot) => slot.date.getHours() >= 12);
+    }
 
-if (requestedDate) {
-  filtered = availabilities.filter(a => {
-    const date = new Date(a.start_at);
-    const local = new Date(
-      date.toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
-    );
+    if (timeOfDay === "morning") {
+      slots = slots.filter((slot) => slot.date.getHours() < 12);
+    }
 
-    const yyyy = local.getFullYear();
-    const mm = String(local.getMonth() + 1).padStart(2, "0");
-    const dd = String(local.getDate()).padStart(2, "0");
+    const options = slots.slice(0, 4).map((slot) => ({
+      date: slot.dateLabel,
+      time: slot.timeLabel
+    }));
 
-    const formattedDate = `${yyyy}-${mm}-${dd}`;
-
-    return formattedDate === requestedDate;
-  });
-}
-
-const slots = filtered.map(a => {
-  const date = new Date(
-    new Date(a.start_at).toLocaleString("en-US", {
-      timeZone: "America/Los_Angeles"
-    })
-  );
-
-  return {
-    raw: a.start_at,
-    date,
-    hour: date.getHours()
-  };
-});
-
-const morning = slots.filter(s => s.hour < 12);
-const afternoon = slots.filter(s => s.hour >= 12 && s.hour < 17);
-const evening = slots.filter(s => s.hour >= 17);
-
-const selected = [
-  ...morning.slice(0, 2),
-  ...afternoon.slice(0, 2),
-  ...evening.slice(0, 1)
-].slice(0, 5);
-
-const formatted = selected.map(s => ({
-  date: s.date.toLocaleDateString([], {
-    weekday: "long",
-    month: "short",
-    day: "numeric"
-  }),
-  time: s.date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit"
-  })
-}));
-    res.json({ options: formatted });
-
+    res.json({ options });
   } catch (err) {
     console.error("SERVER ERROR:", err);
 
